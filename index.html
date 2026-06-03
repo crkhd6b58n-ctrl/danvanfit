@@ -2324,6 +2324,8 @@ function App() {
   const [selMetric, setSelMetric] = useState("pushups");
   const [prInput, setPrInput] = useState("");
   const [addingPr, setAddingPr] = useState(false);
+  const [pathDayArbol, setPathDayArbol] = useState(null);
+  const [arbolEB, setArbolEB] = useState(null);
 
   //  Tick with streak update 
   const tick = useCallback(k => {
@@ -2413,6 +2415,8 @@ function App() {
     setEb(null);
     setExO(null);
     setTn(null);
+    setPathDayArbol(null);
+    setArbolEB(null);
   };
   return /*#__PURE__*/React.createElement("div", {
     style: {
@@ -2426,6 +2430,7 @@ function App() {
       background: C.card,
       borderBottom: `1px solid ${C.border}`,
       padding: "10px 14px 0",
+      paddingTop: "max(10px, env(safe-area-inset-top))",
       position: "sticky",
       top: 0,
       zIndex: 100
@@ -2524,7 +2529,8 @@ function App() {
     style: {
       maxWidth: 720,
       margin: "0 auto",
-      padding: "16px 14px 100px"
+      padding: "16px 14px 100px",
+      paddingBottom: "max(100px, calc(80px + env(safe-area-inset-bottom)))"
     }
   }, tab === "semana" && !dd && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -3553,9 +3559,22 @@ function App() {
   })))))), tab === "arbol" && tn && (() => {
     const path = SKILL_PATHS.find(p => p.id === tn);
     if (!path) return null;
-    const wf = path.weeklyFocus[pw];
+    const pathWeeks = PATH_WEEKS[path.id] || [];
+    const selPathWeek = pathWeeks[pw] || null;
+    const reqsDone = ["r0", "r1", "r2", "r3", "r4", "r5"].filter((_, i) => chk[`req-${i}`]).length;
+    const week12Done = WEEKS[11].days.reduce((acc, _, di) => {
+      const {
+        done,
+        total
+      } = dc(11, di);
+      return acc + (done === total && total > 0 ? 1 : 0);
+    }, 0);
+    const isUnlocked = reqsDone >= 4 && week12Done >= 5;
     return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("button", {
-      onClick: () => setTn(null),
+      onClick: () => {
+        setTn(null);
+        setPathDayArbol(null);
+      },
       style: {
         background: "none",
         border: "none",
@@ -3566,7 +3585,263 @@ function App() {
         padding: "0 0 14px",
         letterSpacing: 1
       }
-    }, "\u2190 \xC1RBOL"), /*#__PURE__*/React.createElement("div", {
+    }, "\u2190 \xC1RBOL"), pathDayArbol !== null && selPathWeek ? (() => {
+      const day = selPathWeek.days[pathDayArbol];
+      const col = TC[day.type] || C.dim;
+      const totalI = day.blocks.reduce((a, b) => a + b.i.length, 0);
+      const doneI = day.blocks.reduce((acc, b, bi) => acc + b.i.filter((_, ii) => chk[`pa-${path.id}-w${pw}-d${pathDayArbol}-b${bi}-i${ii}`]).length, 0);
+      return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 12
+        }
+      }, /*#__PURE__*/React.createElement("button", {
+        onClick: () => setPathDayArbol(null),
+        style: {
+          background: "none",
+          border: "none",
+          color: C.muted,
+          fontFamily: "inherit",
+          fontSize: 11,
+          cursor: "pointer",
+          padding: 0
+        }
+      }, "\u2190 SEM ", selPathWeek.week), /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          gap: 5
+        }
+      }, /*#__PURE__*/React.createElement("button", {
+        onClick: () => setPathDayArbol(d => Math.max(0, d - 1)),
+        style: {
+          background: C.card,
+          border: `1px solid ${C.border}`,
+          borderRadius: 6,
+          padding: "5px 9px",
+          color: pathDayArbol === 0 ? C.dim : C.text,
+          cursor: pathDayArbol === 0 ? "default" : "pointer",
+          fontFamily: "inherit"
+        }
+      }, "\u2190"), /*#__PURE__*/React.createElement("button", {
+        onClick: () => setShowTimer(true),
+        style: {
+          background: C.yellow + "15",
+          border: `1px solid ${C.yellow}40`,
+          borderRadius: 6,
+          padding: "5px 12px",
+          color: C.yellow,
+          fontFamily: "inherit",
+          fontSize: 11,
+          cursor: "pointer",
+          fontWeight: "bold"
+        }
+      }, "\u23F1"), /*#__PURE__*/React.createElement("button", {
+        onClick: () => setPathDayArbol(d => Math.min(6, d + 1)),
+        style: {
+          background: C.card,
+          border: `1px solid ${C.border}`,
+          borderRadius: 6,
+          padding: "5px 9px",
+          color: pathDayArbol === 6 ? C.dim : C.text,
+          cursor: pathDayArbol === 6 ? "default" : "pointer",
+          fontFamily: "inherit"
+        }
+      }, "\u2192"))), /*#__PURE__*/React.createElement("div", {
+        style: {
+          background: col + "12",
+          border: `1px solid ${col}40`,
+          borderRadius: 12,
+          padding: 14,
+          marginBottom: 14
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: 10
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 30
+        }
+      }, day.emoji), /*#__PURE__*/React.createElement("div", {
+        style: {
+          flex: 1
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: 9,
+          color: col,
+          letterSpacing: 3,
+          fontWeight: "bold"
+        }
+      }, WD[pathDayArbol], " \xB7 ", day.type.toUpperCase(), day.dur ? ` · ${day.dur}` : ""), /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: 15,
+          fontWeight: "bold",
+          marginTop: 2
+        }
+      }, selPathWeek.label)), /*#__PURE__*/React.createElement("div", {
+        style: {
+          textAlign: "center"
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: 16,
+          fontWeight: "bold",
+          color: doneI > 0 ? col : C.dim
+        }
+      }, doneI, "/", totalI))), /*#__PURE__*/React.createElement("div", {
+        style: {
+          marginTop: 10,
+          background: C.border,
+          borderRadius: 4,
+          height: 5
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          width: `${totalI > 0 ? doneI / totalI * 100 : 0}%`,
+          height: "100%",
+          background: col,
+          borderRadius: 4,
+          transition: "width .3s"
+        }
+      }))), day.blocks.map((block, bi) => {
+        const isO = arbolEB === bi;
+        const bDone = block.i.filter((_, ii) => chk[`pa-${path.id}-w${pw}-d${pathDayArbol}-b${bi}-i${ii}`]).length;
+        return /*#__PURE__*/React.createElement("div", {
+          key: bi,
+          style: {
+            background: C.card,
+            borderRadius: 10,
+            overflow: "hidden",
+            marginBottom: 6,
+            border: `1px solid ${bDone === block.i.length ? col + "60" : C.border}`
+          }
+        }, /*#__PURE__*/React.createElement("button", {
+          onClick: () => setArbolEB(isO ? null : bi),
+          style: {
+            width: "100%",
+            padding: "12px 14px",
+            background: isO ? col + "08" : "transparent",
+            border: "none",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: 9,
+            textAlign: "left",
+            fontFamily: "inherit"
+          }
+        }, /*#__PURE__*/React.createElement("div", {
+          style: {
+            width: 26,
+            height: 26,
+            borderRadius: 6,
+            background: bDone === block.i.length ? col : C.card2,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 11,
+            color: bDone === block.i.length ? C.bg : C.muted,
+            fontWeight: "bold",
+            flexShrink: 0
+          }
+        }, bDone === block.i.length ? "✓" : bi + 1), /*#__PURE__*/React.createElement("div", {
+          style: {
+            flex: 1
+          }
+        }, /*#__PURE__*/React.createElement("div", {
+          style: {
+            fontSize: 12,
+            fontWeight: "bold",
+            color: C.text,
+            fontFamily: "inherit"
+          }
+        }, block.t), /*#__PURE__*/React.createElement("div", {
+          style: {
+            fontSize: 9,
+            color: C.muted,
+            marginTop: 2
+          }
+        }, bDone, "/", block.i.length)), /*#__PURE__*/React.createElement("span", {
+          style: {
+            color: isO ? col : C.dim,
+            fontSize: 13
+          }
+        }, isO ? "▲" : "▼")), isO && /*#__PURE__*/React.createElement("div", {
+          style: {
+            padding: "0 14px 12px"
+          }
+        }, block.i.map((item, ii) => {
+          const k = `pa-${path.id}-w${pw}-d${pathDayArbol}-b${bi}-i${ii}`;
+          const done = chk[k];
+          return /*#__PURE__*/React.createElement("div", {
+            key: ii,
+            onClick: () => tick(k),
+            style: {
+              display: "flex",
+              gap: 9,
+              alignItems: "flex-start",
+              padding: "8px 0",
+              borderBottom: ii < block.i.length - 1 ? `1px solid ${C.border}` : "none",
+              cursor: "pointer"
+            }
+          }, /*#__PURE__*/React.createElement("div", {
+            style: {
+              width: 19,
+              height: 19,
+              borderRadius: 4,
+              flexShrink: 0,
+              marginTop: 1,
+              border: `2px solid ${done ? col : C.dim}`,
+              background: done ? col : "transparent",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center"
+            }
+          }, done && /*#__PURE__*/React.createElement("span", {
+            style: {
+              color: C.bg,
+              fontSize: 10,
+              fontWeight: "bold"
+            }
+          }, "\u2713")), /*#__PURE__*/React.createElement("span", {
+            style: {
+              fontSize: 12,
+              color: done ? col : "#D0D0D0",
+              lineHeight: 1.5,
+              textDecoration: done ? "line-through" : "none"
+            }
+          }, item));
+        })));
+      }), doneI === totalI && totalI > 0 ? /*#__PURE__*/React.createElement("div", {
+        style: {
+          textAlign: "center",
+          padding: "14px 0",
+          color: col,
+          fontSize: 14,
+          fontWeight: "bold"
+        }
+      }, "\uD83C\uDF89 \xA1D\xCDA COMPLETADO!") : /*#__PURE__*/React.createElement("button", {
+        onClick: () => day.blocks.forEach((b, bi) => b.i.forEach((_, ii) => tick(`pa-${path.id}-w${pw}-d${pathDayArbol}-b${bi}-i${ii}`))),
+        style: {
+          width: "100%",
+          marginTop: 9,
+          padding: "11px",
+          background: col + "15",
+          border: `1px solid ${col}40`,
+          borderRadius: 10,
+          color: col,
+          fontFamily: "inherit",
+          fontWeight: "bold",
+          fontSize: 11,
+          cursor: "pointer",
+          letterSpacing: 1
+        }
+      }, "MARCAR TODO \u2713"));
+    })() : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
       style: {
         background: path.color + "12",
         border: `1px solid ${path.color}40`,
@@ -3592,13 +3867,19 @@ function App() {
         letterSpacing: 2,
         fontWeight: "bold"
       }
-    }, "ESPECIALIZACI\xD3N \xB7 SEM 13-20"), /*#__PURE__*/React.createElement("div", {
+    }, "ESPECIALIZACION SEM 13-20"), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 17,
         fontWeight: "bold",
         color: path.color
       }
-    }, path.label))), /*#__PURE__*/React.createElement("button", {
+    }, path.label), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: "#AAA",
+        marginTop: 2
+      }
+    }, path.tagline))), /*#__PURE__*/React.createElement("button", {
       onClick: () => savePath(cPath === path.id ? null : path.id),
       style: {
         width: "100%",
@@ -3613,54 +3894,67 @@ function App() {
         cursor: "pointer",
         letterSpacing: 1
       }
-    }, cPath === path.id ? "✓ PATH ACTIVO" : "ELEGIR ESTE PATH")), /*#__PURE__*/React.createElement("div", {
+    }, cPath === path.id ? "✓ PATH ACTIVO" : "ELEGIR ESTE PATH")), !isUnlocked && /*#__PURE__*/React.createElement("div", {
       style: {
         background: C.card,
-        borderRadius: 10,
-        padding: 13,
-        marginBottom: 12
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 14,
+        border: `1px solid ${C.orange}40`,
+        textAlign: "center"
       }
     }, /*#__PURE__*/React.createElement("div", {
       style: {
-        fontSize: 9,
-        color: path.color,
-        letterSpacing: 2,
+        fontSize: 32,
+        marginBottom: 8
+      }
+    }, "\uD83D\uDD12"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 13,
         fontWeight: "bold",
-        marginBottom: 7
+        color: C.orange,
+        marginBottom: 6
       }
-    }, "\uD83D\uDD13 DESBLOQUEAS"), /*#__PURE__*/React.createElement("div", {
+    }, "PLAN BLOQUEADO"), /*#__PURE__*/React.createElement("div", {
       style: {
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: 5
-      }
-    }, path.unlocks.map((u, i) => /*#__PURE__*/React.createElement("div", {
-      key: i,
-      style: {
-        background: path.color + "10",
-        borderRadius: 6,
-        padding: "6px 9px",
         fontSize: 11,
-        color: "#CCC",
-        border: `1px solid ${path.color}25`
+        color: C.muted,
+        lineHeight: 1.7,
+        marginBottom: 12
       }
-    }, "\u2B50 ", u)))), /*#__PURE__*/React.createElement("div", {
+    }, "Completa las 12 semanas base y al menos 4 requisitos para desbloquear el plan detallado."), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        justifyContent: "space-around",
+        fontSize: 11
+      }
+    }, /*#__PURE__*/React.createElement("span", null, "Requisitos: ", /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: reqsDone >= 4 ? C.teal : C.orange,
+        fontWeight: "bold"
+      }
+    }, reqsDone, "/6")), /*#__PURE__*/React.createElement("span", null, "Semana 12: ", /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: week12Done >= 5 ? C.teal : C.orange,
+        fontWeight: "bold"
+      }
+    }, week12Done, "/7 dias")))), isUnlocked && selPathWeek && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 9,
         color: C.muted,
         letterSpacing: 2,
         fontWeight: "bold",
-        marginBottom: 7
+        marginBottom: 8
       }
-    }, "SEMANAS DEL PATH"), /*#__PURE__*/React.createElement("div", {
+    }, "PLAN SEMANA A SEMANA"), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         gap: 4,
-        marginBottom: 11,
+        marginBottom: 12,
         overflowX: "auto",
         paddingBottom: 3
       }
-    }, path.weeklyFocus.map((w, i) => /*#__PURE__*/React.createElement("button", {
+    }, pathWeeks.map((w, i) => /*#__PURE__*/React.createElement("button", {
       key: i,
       onClick: () => setPw(i),
       style: {
@@ -3676,64 +3970,177 @@ function App() {
         color: pw === i ? path.color : C.muted,
         whiteSpace: "nowrap"
       }
-    }, "SEM ", w.w))), /*#__PURE__*/React.createElement("div", {
+    }, "SEM ", w.week))), /*#__PURE__*/React.createElement("div", {
       style: {
-        background: C.card,
-        borderRadius: 12,
-        border: `1px solid ${path.color}40`,
-        overflow: "hidden",
+        background: path.color + "08",
+        border: `1px solid ${path.color}30`,
+        borderRadius: 10,
+        padding: "10px 13px",
         marginBottom: 12
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        background: path.color + "10",
-        padding: "10px 14px",
-        borderBottom: `1px solid ${path.color}25`
       }
     }, /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 9,
         color: path.color,
         letterSpacing: 2,
-        fontWeight: "bold"
-      }
-    }, "SEMANA ", wf.w)), /*#__PURE__*/React.createElement("div", {
-      style: {
-        padding: 14,
-        display: "flex",
-        flexDirection: "column",
-        gap: 8
-      }
-    }, [["💪 CALISTENIA (60 min)", C.yellow, wf.focus], ["🏃 RUNNING", C.orange, wf.run], ["🧘 MOVILIDAD", C.teal, wf.mob]].map(([label, col, text]) => /*#__PURE__*/React.createElement("div", {
-      key: label,
-      style: {
-        background: C.card2,
-        borderRadius: 8,
-        padding: 11
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 9,
-        color: col,
-        letterSpacing: 2,
         fontWeight: "bold",
         marginBottom: 5
       }
-    }, label), /*#__PURE__*/React.createElement("div", {
+    }, "ENFOQUE"), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 12,
         color: "#CCC",
         lineHeight: 1.6
       }
-    }, text))))), /*#__PURE__*/React.createElement("div", {
+    }, selPathWeek.focus)), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "grid",
+        gridTemplateColumns: "repeat(7,1fr)",
+        gap: 4,
+        marginBottom: 12
+      }
+    }, WD.map((d, di) => {
+      const day = selPathWeek.days[di];
+      const col = TC[day.type] || C.dim;
+      const totalI = day.blocks.reduce((a, b) => a + b.i.length, 0);
+      const doneI = day.blocks.reduce((acc, b, bi) => acc + b.i.filter((_, ii) => chk[`pa-${path.id}-w${pw}-d${di}-b${bi}-i${ii}`]).length, 0);
+      const pct = totalI > 0 ? doneI / totalI : 0;
+      return /*#__PURE__*/React.createElement("button", {
+        key: di,
+        onClick: () => setPathDayArbol(di),
+        style: {
+          background: C.card,
+          border: `1px solid ${pct === 1 ? col : pct > 0 ? col + "60" : C.border}`,
+          borderRadius: 10,
+          padding: "7px 3px",
+          cursor: "pointer",
+          textAlign: "center",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 3
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: 8,
+          color: pct === 1 ? col : C.muted,
+          fontWeight: "bold"
+        }
+      }, d), /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: 17
+        }
+      }, pct === 1 ? "✅" : day.emoji), /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: 8,
+          color: col,
+          fontWeight: "bold"
+        }
+      }, day.type === "Long Run" ? "LONG" : day.type === "HS Practice" ? "HS" : day.type === "Recovery" ? "REST" : day.type === "Track" ? "TRACK" : day.type.slice(0, 4).toUpperCase()), /*#__PURE__*/React.createElement("div", {
+        style: {
+          width: "80%",
+          height: 3,
+          background: C.border,
+          borderRadius: 2
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          width: `${pct * 100}%`,
+          height: "100%",
+          background: col,
+          borderRadius: 2
+        }
+      })), /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: 7,
+          color: C.muted
+        }
+      }, doneI, "/", totalI));
+    })), selPathWeek.days.map((day, di) => {
+      const col = TC[day.type] || C.dim;
+      const totalI = day.blocks.reduce((a, b) => a + b.i.length, 0);
+      const doneI = day.blocks.reduce((acc, b, bi) => acc + b.i.filter((_, ii) => chk[`pa-${path.id}-w${pw}-d${di}-b${bi}-i${ii}`]).length, 0);
+      return /*#__PURE__*/React.createElement("div", {
+        key: di,
+        onClick: () => setPathDayArbol(di),
+        style: {
+          background: C.card,
+          borderRadius: 10,
+          padding: "11px 13px",
+          marginBottom: 5,
+          border: `1px solid ${doneI === totalI && totalI > 0 ? col + "60" : C.border}`,
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          gap: 10
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: 19
+        }
+      }, doneI === totalI && totalI > 0 ? "✅" : day.emoji), /*#__PURE__*/React.createElement("div", {
+        style: {
+          flex: 1
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          gap: 7,
+          alignItems: "center"
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 13,
+          fontWeight: "bold"
+        }
+      }, WD[di]), /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 9,
+          color: col,
+          fontWeight: "bold"
+        }
+      }, day.type.toUpperCase())), /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: 10,
+          color: C.muted,
+          marginTop: 1
+        }
+      }, day.blocks.length, " bloques")), /*#__PURE__*/React.createElement("div", {
+        style: {
+          textAlign: "right"
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: 13,
+          fontWeight: "bold",
+          color: doneI > 0 ? col : C.dim
+        }
+      }, doneI, "/", totalI), /*#__PURE__*/React.createElement("div", {
+        style: {
+          width: 38,
+          height: 4,
+          background: C.border,
+          borderRadius: 2,
+          marginTop: 3
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          width: `${totalI > 0 ? doneI / totalI * 100 : 0}%`,
+          height: "100%",
+          background: col,
+          borderRadius: 2
+        }
+      }))));
+    })), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 9,
         color: C.muted,
         letterSpacing: 2,
         fontWeight: "bold",
-        marginBottom: 7
+        marginBottom: 7,
+        marginTop: 14
       }
-    }, "\u2B50 SUB-PATHS (semanas 21+)"), path.subPaths.map((sp, i) => /*#__PURE__*/React.createElement("div", {
+    }, "SUB-PATHS (semanas 21+)"), path.subPaths.map((sp, i) => /*#__PURE__*/React.createElement("div", {
       key: i,
       style: {
         background: C.card,
@@ -3755,7 +4162,7 @@ function App() {
         color: "#AAA",
         lineHeight: 1.5
       }
-    }, sp.desc))));
+    }, sp.desc)))));
   })(), tab === "tecnica" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
@@ -4192,6 +4599,121 @@ function App() {
     }));
   })()));
 }
+
+// ─── PATH WEEK GENERATOR ───────────────────────────────────────────────────
+// Generates a 7-day schedule for path weeks (13-20) based on path type and focus
+const genPathDays = (pathId, wf) => {
+  const runDay = {
+    type: "Running",
+    emoji: "🏃",
+    dur: "50 min",
+    blocks: [{
+      t: "🏃 Running",
+      i: [wf.run, "Tibialis raises 3x15 post-run"]
+    }, {
+      t: "🦵 Mobility post-run (12 min)",
+      i: [wf.mob]
+    }]
+  };
+  const trackDay = {
+    type: "Track",
+    emoji: "🏃",
+    dur: "55 min",
+    blocks: [{
+      t: "🏃 Track Workout",
+      i: ["Calienta 1 km", "10x800m al ritmo de 5K", "Recupera 90s", "Enfría 1 km"]
+    }, {
+      t: "🦵 Post-Track Mobility",
+      i: [wf.mob]
+    }]
+  };
+  const longRun = {
+    type: "Long Run",
+    emoji: "🌄",
+    dur: "90+ min",
+    blocks: [{
+      t: `🌄 Long Run -- ${wf.run}`,
+      i: ["Talking pace todo el tiempo", "Lleva hidratación", "Registra distancia en PRs"]
+    }, {
+      t: "🔄 Recovery (20 min)",
+      i: ["Foam roll piernas", "Pancake stretch 2x30s", "Pigeon pose 30s c/lado"]
+    }]
+  };
+  const recovery = {
+    type: "Recovery",
+    emoji: "🌿",
+    dur: "30 min",
+    blocks: [{
+      t: "🌿 Descanso Activo",
+      i: ["Bici suave o caminata 20-30 min", "Stretch completo 15 min", "Registra PRs de la semana", "Planifica la siguiente semana"]
+    }]
+  };
+  const hsDay = {
+    type: "HS Practice",
+    emoji: "🤲",
+    dur: "35 min",
+    blocks: [{
+      t: "🤲 Handstand + Skills (20 min)",
+      i: ["Wrist conditioning 2 min", "Wall HS 4x45s", "Kick-ups 30x", "HS libre: intenta PR -- registra"]
+    }, {
+      t: "🧱 Core (15 min)",
+      i: ["L-sit paralelas 3x20s", "Hollow body 3x40s", "Tuck planche 3x8s"]
+    }]
+  };
+  const caliBase = focus => ({
+    type: "Calistenia",
+    emoji: "💪",
+    dur: "60 min",
+    blocks: [{
+      t: "🔥 Cardio Warm-Up (10 min)",
+      i: WU(3)
+    }, {
+      t: "💪 Sesion Principal (40 min)",
+      i: focus.split(". ").filter(Boolean)
+    }, {
+      t: "🧘 Cool-Down (5 min)",
+      i: CDA()
+    }]
+  });
+  if (pathId === "endurance") return [caliBase(wf.focus), runDay, hsDay, trackDay, caliBase(wf.focus), longRun, recovery];
+  if (pathId === "handstand_p") return [caliBase(wf.focus), {
+    type: "Running",
+    emoji: "🏃",
+    dur: "45 min",
+    blocks: [{
+      t: "🏃 Running",
+      i: [wf.run]
+    }, {
+      t: "🧘 Movilidad",
+      i: [wf.mob]
+    }]
+  }, {
+    type: "HS Practice",
+    emoji: "🤲",
+    dur: "45 min",
+    blocks: [{
+      t: "🤲 Handstand Focus (25 min)",
+      i: wf.focus.split(". ").filter(Boolean)
+    }, {
+      t: "🧱 Core + Planche (20 min)",
+      i: ["Planche lean 3x30s", "L-sit paralelas 3x20s", "Hollow body 3x40s"]
+    }]
+  }, trackDay, caliBase("Pull-ups 5 sets maximas. Chest-to-bar 3x5. Weighted pull-ups. Dips 4x12."), longRun, recovery];
+  // strength, skills, complete
+  return [caliBase(wf.focus), runDay, hsDay, trackDay, caliBase(wf.focus), longRun, recovery];
+};
+
+// Build PATH_WEEKS from SKILL_PATHS weeklyFocus
+const PATH_WEEKS = {};
+SKILL_PATHS.forEach(path => {
+  PATH_WEEKS[path.id] = path.weeklyFocus.map((wf, i) => ({
+    week: wf.w,
+    phase: 4,
+    label: `Semana ${wf.w} -- ${path.label}`,
+    focus: wf.focus,
+    days: genPathDays(path.id, wf)
+  }));
+});
 ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
   </script>
 </body>
